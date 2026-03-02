@@ -272,14 +272,24 @@ code {
   align-items: center;
 }
 
+.custom-reveal-field {
+  margin-top: 14px;
+}
+
 .visual-panel {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  max-height: calc(100vh - 52px);
+  min-height: 0;
 }
 
 .graph-shell {
-  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px;
+  max-height: calc(100vh - 52px);
+  min-height: 0;
   border-radius: var(--radius-xl);
   background: rgba(252, 248, 241, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.52);
@@ -287,23 +297,13 @@ code {
   backdrop-filter: blur(18px);
 }
 
-.graph-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-end;
-  margin-bottom: 14px;
-}
-
-.graph-note {
-  max-width: 28ch;
-  text-align: right;
-}
-
 .graph-svg {
-  width: 100%;
+  width: min(100%, calc(100vh - 92px));
+  max-width: 100%;
+  max-height: calc(100vh - 92px);
   height: auto;
   display: block;
+  margin: 0 auto;
 }
 
 .graph-backdrop {
@@ -322,11 +322,11 @@ code {
 }
 
 .grid-point {
-  fill: rgba(46, 63, 82, 0.12);
+  fill: rgba(46, 63, 82, 0.2);
 }
 
 .grid-point.visible {
-  fill: rgba(14, 116, 144, 0.3);
+  fill: rgba(14, 116, 144, 0.42);
 }
 
 .slope-segment {
@@ -341,6 +341,11 @@ code {
   opacity: 1;
 }
 
+.slope-segment.staggered {
+  animation: segment-fade var(--segment-duration, 260ms) ease both;
+  animation-delay: var(--segment-delay, 0ms);
+}
+
 .slope-segment.zero-slope {
   stroke: #ffd26a;
   stroke-width: 4.6;
@@ -353,20 +358,14 @@ code {
     drop-shadow(0 0 16px rgba(255, 180, 77, 0.38));
 }
 
-.status-bar {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  padding: 18px;
-  border-radius: var(--radius-lg);
-  background: rgba(255, 251, 246, 0.8);
-  border: 1px solid rgba(56, 74, 90, 0.08);
-  box-shadow: var(--shadow);
-}
+@keyframes segment-fade {
+  from {
+    opacity: 0;
+  }
 
-.status-bar strong {
-  font-family: var(--font-display);
-  font-weight: 600;
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 1100px) {
@@ -379,13 +378,14 @@ code {
     overflow-y: visible;
   }
 
-  .graph-header,
-  .status-bar {
-    grid-template-columns: 1fr;
+  .visual-panel,
+  .graph-shell {
+    max-height: none;
   }
 
-  .graph-note {
-    text-align: left;
+  .graph-svg {
+    width: 100%;
+    max-height: none;
   }
 }
 

@@ -53,14 +53,6 @@ export default function PresetBar({
         />
         <span>Show sample points beneath visible segments</span>
       </label>
-      <label className="toggle">
-        <input
-          type="checkbox"
-          checked={settings.highlightZeroSlope}
-          onChange={(event) => onSettingsChange("highlightZeroSlope", event.target.checked)}
-        />
-        <span>Glow zero-slope segments</span>
-      </label>
     </section>
   );
 }

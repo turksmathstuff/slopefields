@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { GridConfig, Viewport } from "../types/slopeField";
 
 type ViewportControlsProps = {
@@ -20,14 +21,37 @@ function NumberField({
   step?: number;
   onChange: (value: number) => void;
 }) {
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => {
+    setDraft(String(value));
+  }, [value]);
+
   return (
     <label className="field">
       <span>{label}</span>
       <input
         type="number"
-        value={Number.isFinite(value) ? value : ""}
+        value={draft}
         step={step ?? 1}
-        onChange={(event) => onChange(Number(event.target.value))}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          setDraft(nextValue);
+
+          if (nextValue === "") {
+            return;
+          }
+
+          const parsed = Number(nextValue);
+          if (!Number.isNaN(parsed)) {
+            onChange(parsed);
+          }
+        }}
+        onBlur={() => {
+          if (draft === "" || Number.isNaN(Number(draft))) {
+            setDraft(String(value));
+          }
+        }}
       />
     </label>
   );

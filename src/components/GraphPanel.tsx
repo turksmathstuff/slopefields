@@ -8,10 +8,41 @@ type GraphPanelProps = {
   animationMs: number;
   showGridPoints: boolean;
   highlightZeroSlope: boolean;
+  recentRevealIds: Set<string>;
+  recentRevealMode: "row" | "column" | null;
+  revealVersion: number;
+  staggerMs: number;
 };
 
-const ticks = [-4, -2, 0, 2, 4];
 const ZERO_SLOPE_EPSILON = 1e-9;
+
+function buildTicks(min: number, max: number) {
+  const span = max - min;
+  if (span <= 0) {
+    return [];
+  }
+
+  const roughStep = span / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const normalized = roughStep / magnitude;
+
+  let step = magnitude;
+  if (normalized >= 5) {
+    step = 5 * magnitude;
+  } else if (normalized >= 2) {
+    step = 2 * magnitude;
+  }
+
+  const firstTick = Math.ceil(min / step) * step;
+  const ticks: number[] = [];
+
+  for (let tick = firstTick; tick <= max + step * 0.25; tick += step) {
+    const rounded = Number(tick.toFixed(8));
+    ticks.push(Object.is(rounded, -0) ? 0 : rounded);
+  }
+
+  return ticks;
+}
 
 export default function GraphPanel({
   points,
@@ -20,19 +51,18 @@ export default function GraphPanel({
   animationMs,
   showGridPoints,
   highlightZeroSlope,
+  recentRevealIds,
+  recentRevealMode,
+  revealVersion,
+  staggerMs,
 }: GraphPanelProps) {
   const plotBox = DEFAULT_PLOT_BOX;
   const { xAxisY, yAxisX } = getAxisPosition(viewport, plotBox);
+  const xTicks = buildTicks(viewport.xMin, viewport.xMax);
+  const yTicks = buildTicks(viewport.yMin, viewport.yMax);
 
   return (
     <section className="graph-shell">
-      <div className="graph-header">
-        <div>
-          <p className="eyebrow">Visualization</p>
-          <h2>Slope field construction</h2>
-        </div>
-        <p className="graph-note">SVG rendering with deterministic reveal patterns and line-based fills.</p>
-      </div>
       <svg viewBox={`0 0 ${plotBox.width} ${plotBox.height}`} className="graph-svg" role="img" aria-label="Slope field graph">
         <defs>
           <linearGradient
@@ -50,26 +80,22 @@ export default function GraphPanel({
 
         <rect x="0" y="0" width={plotBox.width} height={plotBox.height} rx="32" className="graph-backdrop" />
 
-        {ticks.map((tick) =>
-          tick >= viewport.xMin && tick <= viewport.xMax ? (
-            <text
-              key={`x-${tick}`}
-              x={mapXToScreen(tick, viewport, plotBox)}
-              y={plotBox.height - 26}
-              textAnchor="middle"
-              className="axis-label"
-            >
-              {tick}
-            </text>
-          ) : null,
-        )}
-        {ticks.map((tick) =>
-          tick >= viewport.yMin && tick <= viewport.yMax ? (
-            <text key={`y-${tick}`} x={20} y={mapYToScreen(tick, viewport, plotBox) + 4} className="axis-label">
-              {tick}
-            </text>
-          ) : null,
-        )}
+        {xTicks.map((tick) => (
+          <text
+            key={`x-${tick}`}
+            x={mapXToScreen(tick, viewport, plotBox)}
+            y={plotBox.height - 26}
+            textAnchor="middle"
+            className="axis-label"
+          >
+            {tick}
+          </text>
+        ))}
+        {yTicks.map((tick) => (
+          <text key={`y-${tick}`} x={20} y={mapYToScreen(tick, viewport, plotBox) + 4} className="axis-label">
+            {tick}
+          </text>
+        ))}
 
         {xAxisY !== null ? (
           <line
@@ -106,23 +132,34 @@ export default function GraphPanel({
 
         {points
           .filter((point) => point.valid && point.segment)
-          .map((point) => (
-            <line
-              key={point.id}
-              x1={point.segment!.x1}
-              y1={point.segment!.y1}
-              x2={point.segment!.x2}
-              y2={point.segment!.y2}
-              className={`slope-segment ${visibleIds.has(point.id) ? "visible" : ""} ${
-                highlightZeroSlope &&
-                point.slope !== null &&
-                Math.abs(point.slope) <= ZERO_SLOPE_EPSILON
-                  ? "zero-slope"
-                  : ""
-              }`}
-              style={{ ["--segment-duration" as string]: `${animationMs}ms` }}
-            />
-          ))}
+          .map((point) => {
+            const isRecent = recentRevealIds.has(point.id);
+            const staggerIndex =
+              recentRevealMode === "row" ? point.col : recentRevealMode === "column" ? point.row : 0;
+
+            return (
+              <line
+                key={isRecent ? `${point.id}-${revealVersion}` : point.id}
+                x1={point.segment!.x1}
+                y1={point.segment!.y1}
+                x2={point.segment!.x2}
+                y2={point.segment!.y2}
+                className={`slope-segment ${visibleIds.has(point.id) ? "visible" : ""} ${
+                  isRecent && recentRevealMode ? "staggered" : ""
+                } ${
+                  highlightZeroSlope &&
+                  point.slope !== null &&
+                  Math.abs(point.slope) <= ZERO_SLOPE_EPSILON
+                    ? "zero-slope"
+                    : ""
+                }`}
+                style={{
+                  ["--segment-duration" as string]: `${animationMs}ms`,
+                  ["--segment-delay" as string]: `${isRecent ? staggerIndex * staggerMs : 0}ms`,
+                }}
+              />
+            );
+          })}
       </svg>
     </section>
   );

@@ -12,6 +12,8 @@ type ControlPanelProps = {
   viewport: Viewport;
   grid: GridConfig;
   settings: DisplaySettings;
+  customLine: string;
+  customLineError: string | null;
   viewportError: string | null;
   gridError: string | null;
   presets: PresetEquation[];
@@ -23,11 +25,13 @@ type ControlPanelProps = {
   onViewportChange: (key: keyof Viewport, value: number) => void;
   onGridChange: (key: keyof GridConfig, value: number) => void;
   onSettingsChange: (key: keyof DisplaySettings, value: number | boolean) => void;
+  onCustomLineChange: (value: string) => void;
   onNextSegment: () => void;
   onNextRow: () => void;
   onNextColumn: () => void;
   onRevealYX: () => void;
   onRevealNegativeYX: () => void;
+  onRevealCustomLine: () => void;
   onRevealAll: () => void;
   onReset: () => void;
 };
@@ -40,6 +44,8 @@ export default function ControlPanel(props: ControlPanelProps) {
     viewport,
     grid,
     settings,
+    customLine,
+    customLineError,
     viewportError,
     gridError,
     presets,
@@ -51,11 +57,13 @@ export default function ControlPanel(props: ControlPanelProps) {
     onViewportChange,
     onGridChange,
     onSettingsChange,
+    onCustomLineChange,
     onNextSegment,
     onNextRow,
     onNextColumn,
     onRevealYX,
     onRevealNegativeYX,
+    onRevealCustomLine,
     onRevealAll,
     onReset,
   } = props;
@@ -64,7 +72,7 @@ export default function ControlPanel(props: ControlPanelProps) {
     <aside className="control-panel">
       <div className="panel-intro">
         <p className="eyebrow">Slope Field Explorer</p>
-        <h1>Build the field like a live demonstration.</h1>
+        <h1>Build a slope field.</h1>
         <p>
           Enter any first-order differential equation in <code>x</code> and <code>y</code>, tune the viewing window, then
           reveal the segments in deliberate patterns.
@@ -91,11 +99,17 @@ export default function ControlPanel(props: ControlPanelProps) {
 
       <RevealControls
         disabled={disableReveal}
+        customLine={customLine}
+        customLineError={customLineError}
+        highlightZeroSlope={settings.highlightZeroSlope}
+        onCustomLineChange={onCustomLineChange}
+        onToggleZeroSlopeGlow={(value) => onSettingsChange("highlightZeroSlope", value)}
         onNextSegment={onNextSegment}
         onNextRow={onNextRow}
         onNextColumn={onNextColumn}
         onRevealYX={onRevealYX}
         onRevealNegativeYX={onRevealNegativeYX}
+        onRevealCustomLine={onRevealCustomLine}
         onRevealAll={onRevealAll}
         onReset={onReset}
       />

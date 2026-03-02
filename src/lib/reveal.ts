@@ -124,6 +124,24 @@ export function revealAlongLine(
   return updateIndexes(points, visibleIds, grid);
 }
 
+export function revealAlongCustomLine(
+  points: SamplePoint[],
+  current: RevealState,
+  grid: GridConfig,
+  matchesPoint: (point: SamplePoint) => boolean,
+): RevealState {
+  const visibleIds = cloneVisible(current.visibleIds);
+
+  points.forEach((point) => {
+    if (!isRevealable(point) || !matchesPoint(point)) {
+      return;
+    }
+    visibleIds.add(point.id);
+  });
+
+  return updateIndexes(points, visibleIds, grid);
+}
+
 export function revealAll(points: SamplePoint[], grid: GridConfig): RevealState {
   const visibleIds = new Set(points.filter(isRevealable).map((point) => point.id));
   return updateIndexes(points, visibleIds, grid);

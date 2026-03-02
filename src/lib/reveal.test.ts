@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { createInitialRevealState, revealAlongLine, revealNextColumn, revealNextRow, revealNextSegment } from "./reveal";
+import {
+  createInitialRevealState,
+  revealAlongCustomLine,
+  revealAlongLine,
+  revealNextColumn,
+  revealNextRow,
+  revealNextSegment,
+} from "./reveal";
 import type { GridConfig, SamplePoint } from "../types/slopeField";
 
 const grid: GridConfig = { xSteps: 3, ySteps: 3 };
@@ -47,5 +54,20 @@ describe("reveal logic", () => {
     expect(diagonal.visibleIds.has("r1-c1")).toBe(true);
     expect(diagonal.visibleIds.has("r2-c0")).toBe(true);
     expect(diagonal.visibleIds.size).toBe(5);
+  });
+
+  it("reveals only points that actually lie on a custom line", () => {
+    const initial = createInitialRevealState(points, grid);
+    const custom = revealAlongCustomLine(
+      points,
+      initial,
+      grid,
+      (point) => Math.abs(point.y + point.x) <= 1e-9,
+    );
+
+    expect(custom.visibleIds.has("r0-c0")).toBe(true);
+    expect(custom.visibleIds.has("r1-c1")).toBe(true);
+    expect(custom.visibleIds.has("r2-c2")).toBe(true);
+    expect(custom.visibleIds.size).toBe(3);
   });
 });
